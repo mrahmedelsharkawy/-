@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#667eea">
+<title>دفتر المعلم | نظام إدارة الحصص والطلاب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --primary:#667eea;--primary-dark:#5568d3;--secondary:#764ba2;--accent:#f093fb;
+  --success:#10b981;--success-light:#d1fae5;--warning:#f59e0b;--warning-light:#fef3c7;
+  --danger:#ef4444;--danger-light:#fee2e2;--info:#3b82f6;--info-light:#dbeafe;
+  --gray-900:#0f172a;--gray-800:#1e293b;--gray-700:#334155;--gray-600:#475569;
+  --gray-500:#64748b;--gray-400:#94a3b8;--gray-300:#cbd5e1;--gray-200:#e2e8f0;
+  --gray-100:#f1f5f9;--gray-50:#f8fafc;--white:#fff;
+  --gradient-primary:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  --gradient-accent:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);
+  --gradient-success:linear-gradient(135deg,#43e97b 0%,#38f9d7 100%);
+  --gradient-warm:linear-gradient(135deg,#fa709a 0%,#fee140 100%);
+  --gradient-cool:linear-gradient(135deg,#30cfd0 0%,#330867 100%);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.05);
+  --shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);
+  --shadow-md:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);
+  --shadow-lg:0 20px 25px -5px rgba(0,0,0,.1),0 10px 10px -5px rgba(0,0,0,.04);
+  --shadow-xl:0 25px 50px -12px rgba(0,0,0,.25);
+  --radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-xl:24px;
+  --transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{font-family:'Tajawal',sans-serif;background:var(--gray-100);color:var(--gray-800);overflow-x:hidden;min-height:100vh;line-height:1.6}
+body{padding-bottom:80px}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,textarea,select{font-family:inherit}
+
+/* Header */
+.app-header{background:var(--gradient-primary);color:#fff;padding:20px 20px 60px;position:relative;overflow:hidden}
+.app-header::before{content:'';position:absolute;top:-50%;right:-20%;width:300px;height:300px;background:rgba(255,255,255,.1);border-radius:50%}
+.app-header::after{content:'';position:absolute;bottom:-60%;left:-10%;width:200px;height:200px;background:rgba(255,255,255,.08);border-radius:50%}
+.header-top{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2;margin-bottom:16px}
+.teacher-info{display:flex;align-items:center;gap:12px}
+.teacher-avatar{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;border:2px solid rgba(255,255,255,.4);overflow:hidden}
+.teacher-avatar img{width:100%;height:100%;object-fit:cover}
+.teacher-name{font-size:18px;font-weight:700;margin-bottom:2px}
+.teacher-subject{font-size:13px;opacity:.9}
+.header-actions{display:flex;gap:8px}
+.icon-btn{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center;transition:var(--transition);backdrop-filter:blur(10px);position:relative}
+.icon-btn:active{background:rgba(255,255,255,.35);transform:scale(1.05)}
+.notification-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff}
+.header-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;position:relative;z-index:2}
+.stat-card{background:rgba(255,255,255,.18);backdrop-filter:blur(10px);border-radius:var(--radius);padding:12px;text-align:center;border:1px solid rgba(255,255,255,.2)}
+.stat-value{font-size:22px;font-weight:900;margin-bottom:2px}
+.stat-label{font-size:11px;opacity:.9}
+
+/* Main */
+.main-content{padding:0 16px 20px;margin-top:-40px;position:relative;z-index:3}
+.tab-content{display:none;animation:fadeIn .3s ease}
+.tab-content.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Welcome Card */
+.welcome-card{background:var(--gradient-primary);border-radius:var(--radius-lg);padding:20px;color:#fff;margin-bottom:12px;position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
+.welcome-card::before{content:'';position:absolute;top:-30px;left:-30px;width:120px;height:120px;background:rgba(255,255,255,.1);border-radius:50%}
+.welcome-greeting{font-size:14px;opacity:.9;margin-bottom:4px}
+.welcome-title{font-size:22px;font-weight:900;margin-bottom:16px}
+.welcome-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;position:relative;z-index:2}
+.welcome-stat{background:rgba(255,255,255,.18);padding:10px;border-radius:var(--radius);text-align:center;backdrop-filter:blur(10px)}
+.welcome-stat-value{font-size:24px;font-weight:900}
+.welcome-stat-label{font-size:11px;opacity:.9}
+
+/* Next Lesson */
+.next-lesson-card{background:#fff;border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-right:4px solid var(--primary)}
+.next-lesson-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.next-lesson-icon{width:40px;height:40px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px}
+.next-lesson-title{flex:1;font-size:14px;font-weight:700;color:var(--gray-700)}
+.next-lesson-content{display:flex;align-items:center;gap:12px}
+.next-lesson-time{min-width:70px;text-align:center;padding:10px;background:var(--gray-50);border-radius:var(--radius)}
+.next-lesson-time-value{font-size:18px;font-weight:900;color:var(--primary)}
+.next-lesson-time-label{font-size:11px;color:var(--gray-500);margin-top:2px}
+.next-lesson-info{flex:1}
+.next-lesson-student{font-size:16px;font-weight:700;margin-bottom:4px}
+.next-lesson-details{font-size:12px;color:var(--gray-500)}
+
+/* Cards */
+.card{background:#fff;border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);transition:var(--transition)}
+.card:hover{box-shadow:var(--shadow-md)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.card-title{font-size:16px;font-weight:700;color:var(--gray-800);display:flex;align-items:center;gap:8px}
+.card-title i{color:var(--primary)}
+.card-action{font-size:13px;color:var(--primary);font-weight:500;padding:6px 12px;border-radius:var(--radius);background:var(--gray-50);transition:var(--transition)}
+.card-action:active{background:var(--gray-100)}
+
+/* Calendar */
+.calendar{background:#fff;border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.calendar-title{font-size:16px;font-weight:700}
+.calendar-nav{display:flex;gap:6px}
+.calendar-nav button{width:32px;height:32px;border-radius:50%;background:var(--gray-100);color:var(--gray-700);display:flex;align-items:center;justify-content:center;transition:var(--transition)}
+.calendar-nav button:active{background:var(--primary);color:#fff}
+.week-view{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day-cell{aspect-ratio:1;border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);background:var(--gray-50);position:relative;padding:4px}
+.day-cell:active{background:var(--gray-100)}
+.day-cell.today{background:var(--gradient-primary);color:#fff;box-shadow:var(--shadow)}
+.day-cell.has-lessons::after{content:'';position:absolute;bottom:4px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.day-cell.today.has-lessons::after{background:#fff}
+.day-name{font-size:10px;opacity:.7;margin-bottom:2px}
+.day-number{font-size:14px;font-weight:700}
+
+/* Lessons */
+.lesson-item{background:#fff;border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px;transition:var(--transition);border-right:4px solid var(--primary);cursor:pointer}
+.lesson-item:active{transform:scale(.98)}
+.lesson-item.status-done{border-right-color:var(--success);opacity:.85}
+.lesson-item.status-pending{border-right-color:var(--warning)}
+.lesson-item.status-missed{border-right-color:var(--danger);opacity:.7}
+.lesson-time-box{min-width:60px;text-align:center;padding:8px;background:var(--gray-50);border-radius:var(--radius-sm)}
+.lesson-time{font-size:16px;font-weight:900;color:var(--primary)}
+.lesson-duration{font-size:11px;color:var(--gray-500);margin-top:2px}
+.lesson-info{flex:1;min-width:0}
+.lesson-student{font-size:15px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lesson-details{font-size:12px;color:var(--gray-500);display:flex;gap:8px;flex-wrap:wrap}
+.lesson-actions{display:flex;gap:4px}
+.status-btn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;transition:var(--transition);background:var(--gray-100);color:var(--gray-500)}
+.status-btn.active-done{background:var(--success);color:#fff}
+.status-btn.active-pending{background:var(--warning);color:#fff}
+.status-btn.active-missed{background:var(--danger);color:#fff}
+
+/* Search & Filter */
+.search-bar{background:#fff;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-sm)}
+.search-bar i{color:var(--gray-400)}
+.search-bar input{flex:1;border:none;outline:none;font-size:14px;background:transparent}
+.filter-chips{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.filter-chips::-webkit-scrollbar{display:none}
+.chip{padding:6px 14px;border-radius:20px;background:#fff;font-size:13px;font-weight:500;color:var(--gray-600);white-space:nowrap;box-shadow:var(--shadow-sm);transition:var(--transition)}
+.chip.active{background:var(--gradient-primary);color:#fff}
+
+/* Students */
+.student-card{background:#fff;border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px;transition:var(--transition);cursor:pointer}
+.student-card:active{transform:scale(.98)}
+.student-avatar{width:50px;height:50px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0}
+.student-info{flex:1;min-width:0}
+.student-name{font-size:15px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.student-meta{font-size:12px;color:var(--gray-500);display:flex;gap:8px;flex-wrap:wrap}
+.student-meta span{display:flex;align-items:center;gap:3px}
+.student-stats{text-align:left;flex-shrink:0}
+.student-price{font-size:14px;font-weight:900;color:var(--primary)}
+.student-debt{font-size:11px;margin-top:2px}
+.student-debt.has-debt{color:var(--danger);font-weight:700}
+.student-debt.no-debt{color:var(--success)}
+
+/* FAB */
+.fab{position:fixed;bottom:100px;left:20px;width:56px;height:56px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:var(--shadow-xl);z-index:100;transition:var(--transition)}
+.fab:active{transform:scale(.9)}
+
+/* Finance */
+.finance-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.finance-card{background:#fff;border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.finance-card::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;opacity:.1;transform:translate(30%,-30%)}
+.finance-card.income::before{background:var(--success)}
+.finance-card.debt::before{background:var(--danger)}
+.finance-card.expected::before{background:var(--info)}
+.finance-card.students-count::before{background:var(--warning)}
+.finance-icon{width:40px;height:40px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;color:#fff}
+.finance-card.income .finance-icon{background:var(--gradient-success)}
+.finance-card.debt .finance-icon{background:var(--gradient-accent)}
+.finance-card.expected .finance-icon{background:var(--gradient-cool)}
+.finance-card.students-count .finance-icon{background:var(--gradient-warm)}
+.finance-value{font-size:22px;font-weight:900;color:var(--gray-800);margin-bottom:2px}
+.finance-label{font-size:12px;color:var(--gray-500)}
+.chart-container{background:#fff;border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;box-shadow:var(--shadow-sm);height:280px;position:relative}
+
+/* Contacts */
+.contact-card{background:#fff;border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;box-shadow:var(--shadow-sm)}
+.contact-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.contact-name{font-size:15px;font-weight:700;flex:1}
+.contact-finance{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;padding:10px;background:var(--gray-50);border-radius:var(--radius)}
+.contact-finance-item{text-align:center}
+.contact-finance-value{font-size:14px;font-weight:900;color:var(--primary)}
+.contact-finance-label{font-size:10px;color:var(--gray-500)}
+.contact-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.contact-btn{padding:10px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:500;transition:var(--transition)}
+.contact-btn.call{background:var(--info-light);color:var(--info)}
+.contact-btn.whatsapp{background:var(--success-light);color:var(--success)}
+.contact-btn:active{transform:scale(.95)}
+
+/* Profile */
+.profile-card{background:#fff;border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;box-shadow:var(--shadow-sm);text-align:center}
+.profile-avatar{width:100px;height:100px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;margin:0 auto 14px;border:4px solid #fff;box-shadow:var(--shadow-lg);overflow:hidden}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-name{font-size:20px;font-weight:900;margin-bottom:4px}
+.profile-subject{color:var(--gray-500);font-size:14px;margin-bottom:12px}
+.menu-list{background:#fff;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:12px}
+.menu-item{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--gray-100);transition:var(--transition);width:100%;text-align:right}
+.menu-item:last-child{border-bottom:none}
+.menu-item:active{background:var(--gray-50)}
+.menu-icon{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--gray-100);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px}
+.menu-text{flex:1;font-size:14px;font-weight:500}
+.menu-arrow{color:var(--gray-400);font-size:12px}
+
+/* Bottom Nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;justify-content:space-around;padding:8px 0 12px;box-shadow:0 -4px 20px rgba(0,0,0,.08);z-index:50;border-top:1px solid var(--gray-100)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;color:var(--gray-400);transition:var(--transition);position:relative}
+.nav-item.active{color:var(--primary)}
+.nav-item.active::before{content:'';position:absolute;top:-8px;width:30px;height:3px;background:var(--gradient-primary);border-radius:0 0 3px 3px}
+.nav-icon{font-size:20px}
+.nav-label{font-size:11px;font-weight:500}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;z-index:1000}
+.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:var(--radius-xl) var(--radius-xl) 0 0;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{padding:20px;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:2}
+.modal-title{font-size:18px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;color:var(--gray-600)}
+.modal-body{padding:20px}
+
+/* Forms */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:13px;font-weight:500;color:var(--gray-600);margin-bottom:6px}
+.form-input,.form-select,.form-textarea{width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:14px;transition:var(--transition);background:#fff}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(102,126,234,.1)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{padding:12px 20px;border-radius:var(--radius);font-size:14px;font-weight:700;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--gradient-primary);color:#fff;width:100%}
+.btn-primary:active{transform:scale(.98)}
+.btn-secondary{background:var(--gray-100);color:var(--gray-700);width:100%}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--gray-800);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:14px;font-weight:500;box-shadow:var(--shadow-xl);z-index:2000;transition:transform .3s ease;display:flex;align-items:center;gap:10px;max-width:90%}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
+.toast.warning{background:var(--warning)}
+
+/* Empty */
+.empty-state{text-align:center;padding:40px 20px;color:var(--gray-500)}
+.empty-state i{font-size:48px;margin-bottom:12px;opacity:.3}
+.empty-state h3{font-size:16px;margin-bottom:6px;color:var(--gray-700)}
+.empty-state p{font-size:13px}
+
+/* Archive */
+.archive-section{background:#fff;border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.archive-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer}
+.archive-title{font-size:15px;font-weight:700;color:var(--gray-700);display:flex;align-items:center;gap:8px}
+.archive-toggle{width:28px;height:28px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;color:var(--gray-600);transition:var(--transition)}
+.archive-toggle.open{transform:rotate(180deg)}
+.archive-content{display:none}
+.archive-content.open{display:block}
+.archived-student{background:var(--gray-50);border-radius:var(--radius);padding:12px;margin-bottom:8px}
+.archived-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.archived-avatar{width:40px;height:40px;border-radius:50%;background:var(--gray-300);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.archived-info{flex:1;min-width:0}
+.archived-name{font-size:14px;font-weight:700;margin-bottom:2px}
+.archived-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px}
+.archived-stat{text-align:center;padding:6px;background:#fff;border-radius:var(--radius-sm)}
+.archived-stat-value{font-size:13px;font-weight:900;color:var(--primary)}
+.archived-stat-label{font-size:9px;color:var(--gray-500)}
+
+/* Report */
+.report-container{background:#fff;padding:20px;font-family:'Tajawal',sans-serif;color:var(--gray-800)}
+.report-header{text-align:center;padding-bottom:16px;border-bottom:2px solid var(--primary);margin-bottom:16px}
+.report-title{font-size:22px;font-weight:900;color:var(--primary);margin-bottom:4px}
+.report-subtitle{color:var(--gray-500);font-size:13px}
+.report-section{margin-bottom:16px}
+.report-section-title{font-size:15px;font-weight:700;color:var(--primary);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--gray-200)}
+.report-table{width:100%;border-collapse:collapse;font-size:12px}
+.report-table th{background:var(--primary);color:#fff;padding:8px 6px;text-align:right;font-weight:700}
+.report-table td{padding:8px 6px;border-bottom:1px solid var(--gray-200)}
+.report-table tr:nth-child(even){background:var(--gray-50)}
+.report-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.report-summary-item{background:var(--gray-50);padding:10px;border-radius:var(--radius-sm);text-align:center}
+.report-summary-value{font-size:18px;font-weight:900;color:var(--primary)}
+.report-summary-label{font-size:11px;color:var(--gray-500)}
+
+/* Notifications */
+.notification-item{background:var(--warning-light);border-radius:var(--radius);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border-right:4px solid var(--warning);cursor:pointer}
+.notification-icon{width:36px;height:36px;border-radius:50%;background:var(--warning);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.notification-content{flex:1;min-width:0}
+.notification-title{font-size:14px;font-weight:700;margin-bottom:2px}
+.notification-time{font-size:12px;color:var(--gray-600)}
+
+/* Days selector */
+.days-selector{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}
+.day-checkbox{aspect-ratio:1;border-radius:var(--radius);background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;transition:var(--transition)}
+.day-checkbox.selected{background:var(--gradient-primary);color:#fff}
+
+/* User switcher */
+.user-item{padding:14px;background:var(--gray-50);border-radius:var(--radius);margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:var(--transition)}
+.user-item.active{background:var(--gradient-primary);color:#fff}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--gray-100)}
+::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:3px}
+
+/* Responsive */
+@media(min-width:768px){
+  body{max-width:500px;margin:0 auto;background:var(--gray-200);box-shadow:var(--shadow-xl)}
+  .bottom-nav{max-width:500px;left:50%;transform:translateX(-50%);border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+  .fab{left:calc(50% - 230px)}
+}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.badge-success{background:var(--success-light);color:var(--success)}
+.badge-warning{background:var(--warning-light);color:var(--warning)}
+.badge-danger{background:var(--danger-light);color:var(--danger)}
+.badge-info{background:var(--info-light);color:var(--info)}
+.divider{height:1px;background:var(--gray-200);margin:12px 0}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-top">
+    <div class="teacher-info">
+      <div class="teacher-avatar" id="teacherAvatar">أ</div>
+      <div>
+        <div class="teacher-name" id="teacherName">أحمد الشرقاوي</div>
+        <div class="teacher-subject" id="teacherSubject">معلم رياضيات</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="showNotifications()" title="الإشعارات">
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+      </button>
+      <button class="icon-btn" onclick="switchTab('profile')" title="الحساب">
+        <i class="fas fa-user"></i>
+      </button>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-card">
+      <div class="stat-value" id="statStudents">0</div>
+      <div class="stat-label">طالب</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statLessons">0</div>
+      <div class="stat-label">حصة</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statIncome">0</div>
+      <div class="stat-label">ر.س دخل</div>
+    </div>
+  </div>
+</header>
+
+<main class="main-content">
+  <!-- Home Tab -->
+  <div class="tab-content active" id="tab-home">
+    <div class="welcome-card">
+      <div class="welcome-greeting" id="todayDate"></div>
+      <div class="welcome-title" id="welcomeTitle">مرحباً بك 👋</div>
+      <div class="welcome-stats">
+        <div class="welcome-stat">
+          <div class="welcome-stat-value" id="todayTotal">0</div>
+          <div class="welcome-stat-label">حصص اليوم</div>
+        </div>
+        <div class="welcome-stat">
+          <div class="welcome-stat-value" id="todayDone">0</div>
+          <div class="welcome-stat-label">مكتملة</div>
+        </div>
+        <div class="welcome-stat">
+          <div class="welcome-stat-value" id="todayPending">0</div>
+          <div class="welcome-stat-label">متبقية</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="next-lesson-card" id="nextLessonCard" style="display:none;">
+      <div class="next-lesson-header">
+        <div class="next-lesson-icon"><i class="fas fa-clock"></i></div>
+        <div class="next-lesson-title">أقرب حصة قادمة</div>
+      </div>
+      <div class="next-lesson-content" id="nextLessonContent"></div>
+    </div>
+
+    <div class="calendar">
+      <div class="calendar-header">
+        <div class="calendar-title" id="calendarTitle"></div>
+        <div class="calendar-nav">
+          <button onclick="calendarPrev()"><i class="fas fa-chevron-right"></i></button>
+          <button onclick="calendarToday()">اليوم</button>
+          <button onclick="calendarNext()"><i class="fas fa-chevron-left"></i></button>
+        </div>
+      </div>
+      <div id="calendarView"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-calendar-day"></i> حصص اليوم</div>
+        <button class="card-action" onclick="exportCalendar()"><i class="fas fa-calendar-plus"></i> تصدير</button>
+      </div>
+      <div id="todayLessons"></div>
+    </div>
+  </div>
+
+  <!-- Students Tab -->
+  <div class="tab-content" id="tab-students">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="studentSearch" placeholder="ابحث عن طالب..." oninput="renderStudents()">
+    </div>
+    <div class="filter-chips">
+      <button class="chip active" data-filter="all" onclick="setFilter('all',this)">الكل</button>
+      <button class="chip" data-filter="حضوري" onclick="setFilter('حضوري',this)">حضوري</button>
+      <button class="chip" data-filter="اونلاين" onclick="setFilter('اونلاين',this)">أونلاين</button>
+      <button class="chip" data-filter="قدرات" onclick="setFilter('قدرات',this)">قدرات</button>
+      <button class="chip" data-filter="منهج" onclick="setFilter('منهج',this)">منهج</button>
+    </div>
+    <div id="studentsList"></div>
+
+    <div class="archive-section">
+      <div class="archive-header" onclick="toggleArchive()">
+        <div class="archive-title"><i class="fas fa-archive"></i> الأرشيف</div>
+        <div class="archive-toggle" id="archiveToggle"><i class="fas fa-chevron-down"></i></div>
+      </div>
+      <div class="archive-content" id="archiveContent">
+        <div id="archivedStudentsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Finance Tab -->
+  <div class="tab-content" id="tab-finance">
+    <div class="finance-summary">
+      <div class="finance-card income">
+        <div class="finance-icon"><i class="fas fa-coins"></i></div>
+        <div class="finance-value" id="totalIncome">0</div>
+        <div class="finance-label">إجمالي الدخل</div>
+      </div>
+      <div class="finance-card debt">
+        <div class="finance-icon"><i class="fas fa-hand-holding-usd"></i></div>
+        <div class="finance-value" id="totalDebt">0</div>
+        <div class="finance-label">ديون مستحقة</div>
+      </div>
+      <div class="finance-card expected">
+        <div class="finance-icon"><i class="fas fa-chart-line"></i></div>
+        <div class="finance-value" id="totalExpected">0</div>
+        <div class="finance-label">الدخل المتوقع</div>
+      </div>
+      <div class="finance-card students-count">
+        <div class="finance-icon"><i class="fas fa-users"></i></div>
+        <div class="finance-value" id="totalStudents">0</div>
+        <div class="finance-label">عدد الطلاب</div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-chart-bar"></i> الدخل الشهري</div>
+      </div>
+      <canvas id="incomeChart"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-list"></i> الطلاب والديون</div>
+        <button class="card-action" onclick="exportFinanceReport()"><i class="fas fa-file-export"></i> تصدير</button>
+      </div>
+      <div id="studentsFinance"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-receipt"></i> سجل الدفعات</div>
+        <button class="card-action" onclick="openAddPaymentModal()"><i class="fas fa-plus"></i> إضافة</button>
+      </div>
+      <div id="paymentsList"></div>
+    </div>
+  </div>
+
+  <!-- Contacts Tab -->
+  <div class="tab-content" id="tab-contacts">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="contactSearch" placeholder="ابحث في جهات الاتصال..." oninput="renderContacts()">
+    </div>
+    <div id="contactsList"></div>
+  </div>
+
+  <!-- Profile Tab -->
+  <div class="tab-content" id="tab-profile">
+    <div class="profile-card">
+      <div class="profile-avatar" id="profileAvatar">أ</div>
+      <div class="profile-name" id="profileName">أحمد الشرقاوي</div>
+      <div class="profile-subject" id="profileSubject">معلم رياضيات</div>
+    </div>
+
+    <div class="menu-list">
+      <button class="menu-item" onclick="openEditProfileModal()">
+        <div class="menu-icon"><i class="fas fa-user-edit"></i></div>
+        <div class="menu-text">تعديل البيانات الشخصية</div>
+        <i class="fas fa-chevron-left menu-arrow"></i>
+      </button>
+      <button class="menu-item" onclick="openUsersModal()">
+        <div class="menu-icon"><i class="fas fa-users"></i></div>
+        <div class="menu-text">تبديل المستخدمين</div>
+        <i class="fas fa-chevron-left menu-arrow"></i>
+      </button>
+      <button class="menu-item" onclick="downloadBackup()">
+        <div class="menu-icon"><i class="fas fa-download"></i></div>
+        <div class="menu-text">نسخ احتياطي (تحميل)</div>
+        <i class="fas fa-chevron-left menu-arrow"></i>
+      </button>
+      <button class="menu-item" onclick="document.getElementById('uploadBackup').click()">
+        <div class="menu-icon"><i class="fas fa-upload"></i></div>
+        <div class="menu-text">استعادة نسخة احتياطية</div>
+        <i class="fas fa-chevron-left menu-arrow"></i>
+      </button>
+      <input type="file" id="uploadBackup" accept=".json" style="display:none" onchange="uploadBackup(event)">
+      <button class="menu-item" onclick="viewBackupLogs()">
+        <div class="menu-icon"><i class="fas fa-history"></i></div>
+        <div class="menu-text">سجل النسخ الاحتياطية</div>
+        <i class="fas fa-chevron-left menu-arrow"></i>
+      </button>
+      <button class="menu-item" onclick="showAbout()">
+        <div class="menu-icon"><i class="fas fa-info-circle"></i></div>
+        <div class="menu-text">حول التطبيق</div>
+        <i class="fas fa-chevron-left menu-arrow"></i>
+      </button>
+    </div>
+  </div>
+</main>
+
+<button class="fab" id="fab" onclick="handleFab()"><i class="fas fa-plus"></i></button>
+
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchTab('home',this)">
+    <i class="fas fa-home nav-icon"></i><span class="nav-label">الرئيسية</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('students',this)">
+    <i class="fas fa-user-graduate nav-icon"></i><span class="nav-label">الطلاب</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('finance',this)">
+    <i class="fas fa-chart-pie nav-icon"></i><span class="nav-label">المالية</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('contacts',this)">
+    <i class="fas fa-address-book nav-icon"></i><span class="nav-label">تواصل</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('profile',this)">
+    <i class="fas fa-user nav-icon"></i><span class="nav-label">حسابي</span>
+  </button>
+</nav>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">عنوان</div>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="reportContainer" style="position:absolute;left:-9999px;top:0;"></div>
+
+<script>
+// ============ STATE ============
+const STORAGE_KEY='teacher_notebook_data';
+let state={currentUserId:'profile-main',users:{},currentTab:'home',currentFilter:'all',calendarDate:new Date(),charts:{}};
+
+// ============ DEMO DATA (Full) ============
+const DEMO_DATA={"version":4,"updatedAt":"2026-10-31T16:58:06.034Z","profileId":"profile-main","teacher":{"name":"‏أحمد الشرقاوي","specialty":"‏رياضيات","phone":"0531689140","email":"prof.ahmed.elsharkawy@gmail.com","city":"الرياض","experience":5,"bio":"معلم متخصص في تقديم الدروس الخصوصية ومساعدة الطلاب على تحقيق أفضل النتائج.","photo":""},"students":[{"id":1787118170654,"name":"هاشم","stage":"ثانوي","grade":"الثاني","courseType":"اونلاين","subjectType":"قدرات","price":100,"phone":"0561652734","guardianPhone":"","guardianRelation":"","location":"مكة","lessons":[{"id":1793464516567,"date":"2026-10-31","time":"21:00","duration":1,"status":"انتظار","notes":""},{"id":1790775039973,"date":"2026-10-28","time":"22:00","duration":1,"status":"تم","notes":"حصة ثابتة طوال الشهر","archived":true}],"payments":[{"id":1790174046728,"date":"2026-09-23","amount":500,"notes":""}]},{"id":1787119731958,"name":"عبد الحليم","stage":"ثانوي","grade":"الثاني","courseType":"اونلاين","subjectType":"قدرات","price":100,"phone":"0543937968","guardianPhone":"","guardianRelation":"","location":"مكة","lessons":[{"id":1793131000350,"date":"2026-10-27","time":"21:00","duration":1.75,"status":"تم","notes":"","archived":true},{"id":1790775214571,"date":"2026-10-22","time":"21:00","duration":1.25,"status":"تم","notes":"حصة ثابتة طوال الشهر","archived":true}],"payments":[{"id":1789069496015,"date":"2026-09-10","amount":500,"notes":""}]},{"id":1790345501396,"name":"سامي وأخوه","stage":"ثانوي","grade":"الثاني","courseType":"حضوري","subjectType":"قدرات","price":150,"phone":"0535756578","guardianPhone":"0506664861","guardianRelation":"أب","location":"21.601351,39.243038","lessons":[{"id":1792917206976,"date":"2026-11-04","time":"16:00","duration":1,"status":"انتظار","notes":"حصة ثابتة طوال الشهر"},{"id":1792917206532,"date":"2026-11-06","time":"16:00","duration":1,"status":"انتظار","notes":"حصة ثابتة طوال الشهر"},{"id":1792917207209,"date":"2026-11-07","time":"16:00","duration":1,"status":"انتظار","notes":"حصة ثابتة طوال الشهر"},{"id":1790775581941,"date":"2026-10-31","time":"13:30","duration":1,"status":"تم","notes":"حصة ثابتة طوال الشهر","archived":true}],"payments":[{"id":1793440886961,"date":"2026-10-31","amount":1050,"notes":""}]},{"id":1790509873315,"name":"حسام","stage":"ثانوي","grade":"الاول","courseType":"حضوري","subjectType":"منهج","price":125,"phone":"0545795459","guardianPhone":"0545919113","guardianRelation":"أم","location":"21.569181,39.160475","buildingDetails":"رقم المبني ١٧١ الدور ٢ شقة ٦","lessons":[{"id":1790674909022,"date":"2026-10-29","time":"16:00","duration":1,"status":"تم","notes":"حصة ثابتة طوال الشهر","archived":true}],"payments":[{"id":1793289810348,"date":"2026-10-29","amount":1250,"notes":""}]},{"id":1790798427992,"name":"عمر  الشهري","stage":"ثانوي","grade":"الاول","courseType":"حضوري","subjectType":"منهج","price":150,"phone":"","guardianPhone":"+966 50 465 3597","guardianRelation":"أم","location":"21.767912,39.219551","buildingDetails":"حي الحمدانية","lessons":[{"id":1792917051141,"date":"2026-10-25","time":"15:30","duration":1,"status":"تم","notes":"حصة ثابتة طوال الشهر","archived":true},{"id":1792917051905,"date":"2026-10-28","time":"19:00","duration":1,"status":"تم","notes":"حصة ثابتة طوال الشهر","archived":true},{"id":1792917051144,"date":"2026-11-02","time":"19:00","duration":1,"status":"انتظار","notes":"حصة ثابتة طوال الشهر"}],"payments":[{"id":1793183882677,"date":"2026-10-28","amount":600,"notes":""}]},{"id":1787922020700,"name":"أنا أسطوري ","stage":"ثانوي","grade":"","courseType":"حضوري","subjectType":"قدرات","price":110,"phone":"","guardianPhone":"","guardianRelation":"","location":"21.6157365, 39.1262791","buildingDetails":"جده - حي النهضة ","lessons":[{"id":1793218011421,"date":"2026-10-31","time":"16:00","duration":3,"status":"تم","notes":"حصة ثابتة طوال الشهر","archived":true},{"id":1793218011454,"date":"2026-11-02","time":"16:00","duration":3,"status":"انتظار","notes":"حصة ثابتة طوال الشهر"}],"payments":[{"id":1792940511424,"date":"2026-10-25","amount":3300,"notes":""}]},{"id":1791144905850,"name":"محمد الشعيبي GAT","stage":"ثانوي","grade":"الثاني","courseType":"اونلاين","subjectType":"قدرات","price":125,"phone":"+966 53 497 9590","guardianPhone":"","guardianRelation":"","location":"","lessons":[{"id":1793097607984,"date":"2026-10-26","time":"22:00","duration":1,"status":"تم","notes":"","archived":true},{"id":1793464496508,"date":"2026-10-31","time":"22:00","duration":1,"status":"انتظار","notes":""}],"payments":[]},{"id":1791545645537,"name":"عبد العزيز INT","stage":"متوسط","grade":"Grade 6","courseType":"حضوري","subjectType":"منهج","price":150,"phone":"00 966 55 010 1079","guardianPhone":"+966 58 087 7748","guardianRelation":"أم","location":"21.7853864,39.1053951","buildingDetails":"الدور 5 شقة 10","lessons":[{"id":1791545670791,"date":"2026-10-10","time":"10:00","duration":1,"status":"تم","notes":"","archived":true},{"id":1793011206354,"date":"2026-11-20","time":"17:00","duration":1,"status":"انتظار","notes":""}],"payments":[{"id":1791696168864,"date":"2026-10-11","amount":150,"notes":""}]},{"id":1792506790784,"name":"علي","stage":"متوسط","grade":"الاول","courseType":"حضوري","subjectType":"منهج","price":150,"phone":"","guardianPhone":"","guardianRelation":"","location":"21.7919339, 39.1012527","buildingDetails":"ابحر الشمالية - حي الصواري - الدور السادس - شقة ١٦","lessons":[{"id":1793100353171,"date":"2026-10-27","time":"19:00","duration":1,"status":"تم","notes":"","archived":true},{"id":1793120792092,"date":"2026-11-11","time":"19:00","duration":1,"status":"انتظار","notes":"حصة ثابتة طوال الشهر"}],"payments":[]},{"id":1789499074494,"name":"لمار","stage":"ثانوي","grade":"الثالث","courseType":"حضوري","subjectType":"منهج","price":150,"phone":"","guardianPhone":"0599880639","guardianRelation":"أم","location":"21.7615374,39.1140123","lessons":[{"id":1790774904538,"date":"2026-10-25","time":"14:00","duration":1,"status":"تم","notes":"حصة ثابتة طوال الشهر","archived":true},{"id":1793464433035,"date":"2026-11-01","time":"19:00","duration":1,"status":"انتظار","notes":""}],"payments":[{"id":1793442664919,"date":"2026-10-31","amount":900,"notes":""}]}],"archivedStudents":[],"lessonArchive":[],"backupLogs":[]};
+
+// ============ INIT ============
+function init(){
+  try{loadData();renderAll();updateTodayDate();renderCalendar();checkNotifications();}
+  catch(e){console.error(e);showToast('خطأ في التحميل','error');}
+}
+
+function loadData(){
+  try{
+    const saved=localStorage.getItem(STORAGE_KEY);
+    if(saved){const p=JSON.parse(saved);state.users=p.users||{};state.currentUserId=p.currentUserId||'profile-main';}
+    else loadDemoData();
+    if(!state.users[state.currentUserId])state.currentUserId=Object.keys(state.users)[0]||'profile-main';
+  }catch(e){loadDemoData();}
+}
+
+function loadDemoData(){
+  state.users={'profile-main':JSON.parse(JSON.stringify(DEMO_DATA))};
+  state.currentUserId='profile-main';
+  saveData();
+}
+
+function saveData(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({users:state.users,currentUserId:state.currentUserId}));}
+  catch(e){showToast('خطأ في الحفظ','error');}
+}
+
+function getCurrentUser(){return state.users[state.currentUserId];}
+
+// ============ UTILITIES ============
+function formatNumber(n){return new Intl.NumberFormat('ar-SA').format(Math.round(n));}
+function formatDate(d){return new Date(d).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});}
+function getToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function getShortDayName(d){return ['أحد','إثن','ثلا','أرب','خمي','جمع','سبت'][d.getDay()];}
+function getMonthName(m){return ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][m];}
+
+function calculateDebt(s){
+  const completed=(s.lessons||[]).filter(l=>l.status==='تم');
+  const hours=completed.reduce((sum,l)=>sum+(l.duration||1),0);
+  const earned=hours*(parseFloat(s.price)||0);
+  const paid=(s.payments||[]).reduce((sum,p)=>sum+(parseFloat(p.amount)||0),0);
+  return earned-paid;
+}
+function calculateTotalEarned(s){
+  const completed=(s.lessons||[]).filter(l=>l.status==='تم');
+  const hours=completed.reduce((sum,l)=>sum+(l.duration||1),0);
+  return hours*(parseFloat(s.price)||0);
+}
+function calculateTotalPaid(s){return (s.payments||[]).reduce((sum,p)=>sum+(parseFloat(p.amount)||0),0);}
+function calculateExpected(s){
+  const pending=(s.lessons||[]).filter(l=>l.status==='انتظار');
+  const hours=pending.reduce((sum,l)=>sum+(l.duration||1),0);
+  return hours*(parseFloat(s.price)||0);
+}
+
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  const icon=type==='success'?'check-circle':type==='error'?'times-circle':'info-circle';
+  t.innerHTML=`<i class="fas fa-${icon}"></i> ${msg}`;
+  t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function openModal(title,html){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML=html;
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function closeModal(e){
+  if(e&&e.target.id!=='modalOverlay'&&e.type==='click')return;
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+// ============ RENDER ============
+function renderAll(){
+  try{
+    renderHeader();renderHomeTab();renderStudents();renderFinance();renderContacts();renderProfile();checkNotifications();
+  }catch(e){console.error(e);}
+}
+
+function renderHeader(){
+  const u=getCurrentUser();if(!u)return;
+  const t=u.teacher||{};
+  const name=(t.name||'').replace(/‏/g,'').trim();
+  document.getElementById('teacherName').textContent=name||'المعلم';
+  document.getElementById('teacherSubject').textContent=t.specialty?`معلم ${t.specialty.replace(/‏/g,'')}`:'';
+  const av=document.getElementById('teacherAvatar');
+  if(t.photo)av.innerHTML=`<img src="${t.photo}">`;
+  else av.textContent=name?name.charAt(0):'م';
+  
+  const students=u.students||[];
+  const allLessons=students.flatMap(s=>s.lessons||[]);
+  const totalIncome=students.reduce((sum,s)=>sum+calculateTotalPaid(s),0);
+  document.getElementById('statStudents').textContent=formatNumber(students.length);
+  document.getElementById('statLessons').textContent=formatNumber(allLessons.length);
+  document.getElementById('statIncome').textContent=formatNumber(totalIncome);
+}
+
+function renderHomeTab(){
+  const u=getCurrentUser();if(!u)return;
+  const today=getToday();
+  const students=u.students||[];
+  const todayLessons=[];
+  students.forEach(s=>{
+    (s.lessons||[]).forEach(l=>{
+      if(l.date===today)todayLessons.push({...l,studentName:s.name,studentId:s.id});
+    });
+  });
+  todayLessons.sort((a,b)=>a.time.localeCompare(b.time));
+  
+  const done=todayLessons.filter(l=>l.status==='تم').length;
+  const pending=todayLessons.filter(l=>l.status==='انتظار').length;
+  
+  document.getElementById('todayTotal').textContent=todayLessons.length;
+  document.getElementById('todayDone').textContent=done;
+  document.getElementById('todayPending').textContent=pending;
+  
+  // Next lesson
+  const now=new Date();
+  const currentTime=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const upcoming=todayLessons.filter(l=>l.status==='انتظار'&&l.time>=currentTime).sort((a,b)=>a.time.localeCompare(b.time))[0];
+  
+  const nextCard=document.getElementById('nextLessonCard');
+  if(upcoming){
+    nextCard.style.display='block';
+    document.getElementById('nextLessonContent').innerHTML=`
+      <div class="next-lesson-time">
+        <div class="next-lesson-time-value">${upcoming.time}</div>
+        <div class="next-lesson-time-label">${upcoming.duration||1} ساعة</div>
+      </div>
+      <div class="next-lesson-info">
+        <div class="next-lesson-student">${upcoming.studentName}</div>
+        <div class="next-lesson-details"><i class="fas fa-book"></i> ${upcoming.notes||'حصة عادية'}</div>
+      </div>`;
+  }else{
+    nextCard.style.display='none';
+  }
+  
+  const container=document.getElementById('todayLessons');
+  if(todayLessons.length===0){
+    container.innerHTML=`<div class="empty-state"><i class="fas fa-calendar-check"></i><h3>لا توجد حصص اليوم</h3><p>استرح أو أضف حصة جديدة</p></div>`;
+    return;
+  }
+  container.innerHTML=todayLessons.map(l=>renderLessonItem(l)).join('');
+}
+
+function renderLessonItem(l){
+  const sc=l.status==='تم'?'status-done':l.status==='انتظار'?'status-pending':'status-missed';
+  return `
+    <div class="lesson-item ${sc}" onclick="openLessonDetails(${l.studentId},${l.id})">
+      <div class="lesson-time-box">
+        <div class="lesson-time">${l.time}</div>
+        <div class="lesson-duration">${l.duration||1} ساعة</div>
+      </div>
+      <div class="lesson-info">
+        <div class="lesson-student">${l.studentName}</div>
+        <div class="lesson-details"><span><i class="fas fa-book"></i> ${l.notes||'حصة عادية'}</span></div>
+      </div>
+      <div class="lesson-actions" onclick="event.stopPropagation()">
+        <button class="status-btn ${l.status==='تم'?'active-done':''}" onclick="updateLessonStatus(${l.studentId},${l.id},'تم')"><i class="fas fa-check"></i></button>
+        <button class="status-btn ${l.status==='انتظار'?'active-pending':''}" onclick="updateLessonStatus(${l.studentId},${l.id},'انتظار')"><i class="fas fa-clock"></i></button>
+        <button class="status-btn ${l.status==='لم تتم'?'active-missed':''}" onclick="updateLessonStatus(${l.studentId},${l.id},'لم تتم')"><i class="fas fa-times"></i></button>
+      </div>
+    </div>`;
+}
+
+function updateLessonStatus(sid,lid,status){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  const l=s.lessons.find(x=>x.id===lid);if(!l)return;
+  l.status=status;
+  saveData();renderAll();showToast('تم تحديث الحالة');
+}
+
+function openLessonDetails(sid,lid){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  const l=s.lessons.find(x=>x.id===lid);if(!l)return;
+  
+  openModal('تفاصيل الحصة',`
+    <div style="text-align:center;padding:10px 0;">
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px;">${s.name}</div>
+      <div style="color:var(--gray-500);margin-bottom:16px;">${formatDate(l.date)} - ${l.time}</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">حالة الحصة</label>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        <button class="btn ${l.status==='تم'?'btn-success':'btn-secondary'}" onclick="updateLessonStatus(${sid},${lid},'تم');closeModal();"><i class="fas fa-check"></i> تمت</button>
+        <button class="btn ${l.status==='انتظار'?'btn-primary':'btn-secondary'}" style="${l.status==='انتظار'?'background:var(--warning);':''}" onclick="updateLessonStatus(${sid},${lid},'انتظار');closeModal();"><i class="fas fa-clock"></i> تأجلت</button>
+        <button class="btn ${l.status==='لم تتم'?'btn-danger':'btn-secondary'}" onclick="updateLessonStatus(${sid},${lid},'لم تتم');closeModal();"><i class="fas fa-times"></i> لم تتم</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-secondary" onclick="closeModal();openStudentDetails(${sid});"><i class="fas fa-user"></i> عرض ملف الطالب</button>
+  `);
+}
+
+// ============ CALENDAR ============
+function updateTodayDate(){
+  const now=new Date();
+  document.getElementById('todayDate').textContent=now.toLocaleDateString('ar-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+
+function renderCalendar(){
+  const d=state.calendarDate;
+  document.getElementById('calendarTitle').textContent=`${getMonthName(d.getMonth())} ${d.getFullYear()}`;
+  renderWeekView(document.getElementById('calendarView'),d);
+}
+
+function renderWeekView(c,d){
+  const today=new Date();today.setHours(0,0,0,0);
+  const start=new Date(d);
+  const diff=start.getDate()-start.getDay();
+  start.setDate(diff);
+  const u=getCurrentUser();
+  const students=u?.students||[];
+  let html='<div class="week-view">';
+  for(let i=0;i<7;i++){
+    const dd=new Date(start);dd.setDate(start.getDate()+i);
+    const ds=`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
+    const isToday=dd.getTime()===today.getTime();
+    const count=students.reduce((sum,s)=>sum+(s.lessons||[]).filter(l=>l.date===ds).length,0);
+    html+=`<div class="day-cell ${isToday?'today':''} ${count>0?'has-lessons':''}" onclick="selectCalendarDate('${ds}')"><div class="day-name">${getShortDayName(dd)}</div><div class="day-number">${dd.getDate()}</div></div>`;
+  }
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+function calendarPrev(){state.calendarDate.setDate(state.calendarDate.getDate()-7);renderCalendar();}
+function calendarNext(){state.calendarDate.setDate(state.calendarDate.getDate()+7);renderCalendar();}
+function calendarToday(){state.calendarDate=new Date();renderCalendar();}
+
+function selectCalendarDate(ds){
+  const u=getCurrentUser();
+  const students=u?.students||[];
+  const dayLessons=[];
+  students.forEach(s=>{
+    (s.lessons||[]).forEach(l=>{
+      if(l.date===ds)dayLessons.push({...l,studentName:s.name,studentId:s.id});
+    });
+  });
+  dayLessons.sort((a,b)=>a.time.localeCompare(b.time));
+  let html='';
+  if(dayLessons.length===0)html=`<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>لا توجد حصص</h3></div>`;
+  else html=dayLessons.map(l=>renderLessonItem(l)).join('');
+  openModal(formatDate(ds),html);
+}
+
+function exportCalendar(){
+  const u=getCurrentUser();if(!u)return;
+  const students=u.students||[];
+  let ics='BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Teacher Notebook//AR\n';
+  students.forEach(s=>{
+    (s.lessons||[]).forEach(l=>{
+      if(l.status==='انتظار'){
+        const d=l.date.replace(/-/g,'');
+        const t=l.time.replace(':','')+'00';
+        ics+=`BEGIN:VEVENT\nDTSTART:${d}T${t}\nSUMMARY:حصة ${s.name}\nDESCRIPTION:${l.notes||''}\nEND:VEVENT\n`;
+      }
+    });
+  });
+  ics+='END:VCALENDAR';
+  const blob=new Blob([ics],{type:'text/calendar'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='lessons.ics';a.click();
+  showToast('تم تصدير التقويم');
+}
+
+// ============ STUDENTS ============
+function renderStudents(){
+  const u=getCurrentUser();if(!u)return;
+  const students=u.students||[];
+  const search=(document.getElementById('studentSearch')?.value||'').toLowerCase();
+  const filter=state.currentFilter;
+  const filtered=students.filter(s=>{
+    const match=s.name.toLowerCase().includes(search)||(s.phone||'').includes(search);
+    let mf=true;
+    if(filter==='حضوري'||filter==='اونلاين')mf=s.courseType===filter;
+    else if(filter==='قدرات'||filter==='منهج')mf=s.subjectType===filter;
+    return match&&mf;
+  });
+  const c=document.getElementById('studentsList');
+  if(filtered.length===0){
+    c.innerHTML=`<div class="empty-state"><i class="fas fa-user-graduate"></i><h3>لا يوجد طلاب</h3><p>اضغط + لإضافة طالب جديد</p></div>`;
+  }else{
+    c.innerHTML=filtered.map(s=>{
+      const debt=calculateDebt(s);
+      const ch=s.name.trim().charAt(0)||'ط';
+      return `
+        <div class="student-card" onclick="openStudentDetails(${s.id})">
+          <div class="student-avatar">${ch}</div>
+          <div class="student-info">
+            <div class="student-name">${s.name}</div>
+            <div class="student-meta">
+              <span><i class="fas fa-graduation-cap"></i> ${s.stage}</span>
+              <span><i class="fas fa-${s.courseType==='حضوري'?'home':'video'}"></i> ${s.courseType}</span>
+              <span><i class="fas fa-book"></i> ${s.subjectType}</span>
+            </div>
+          </div>
+          <div class="student-stats">
+            <div class="student-price">${s.price} ر.س</div>
+            <div class="student-debt ${debt>0?'has-debt':'no-debt'}">${debt>0?`مستحق: ${formatNumber(debt)}`:'مسدد ✓'}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+  renderArchivedStudents();
+}
+
+function renderArchivedStudents(){
+  const u=getCurrentUser();if(!u)return;
+  const archived=u.archivedStudents||[];
+  const c=document.getElementById('archivedStudentsList');
+  if(archived.length===0){
+    c.innerHTML=`<div class="empty-state"><i class="fas fa-archive"></i><h3>لا يوجد طلاب مؤرشفون</h3></div>`;
+    return;
+  }
+  c.innerHTML=archived.map(a=>{
+    const s=a.student;
+    const ch=s.name.trim().charAt(0)||'ط';
+    return `
+      <div class="archived-student">
+        <div class="archived-header">
+          <div class="archived-avatar">${ch}</div>
+          <div class="archived-info">
+            <div class="archived-name">${s.name}</div>
+            <div style="font-size:11px;color:var(--gray-500);">${s.stage} - ${s.grade||''}</div>
+          </div>
+        </div>
+        <div class="archived-stats-grid">
+          <div class="archived-stat"><div class="archived-stat-value">${a.stats?.lessonCount||0}</div><div class="archived-stat-label">حصة</div></div>
+          <div class="archived-stat"><div class="archived-stat-value">${formatNumber(a.stats?.paid||0)}</div><div class="archived-stat-label">مدفوع</div></div>
+          <div class="archived-stat"><div class="archived-stat-value" style="color:${(a.stats?.debt||0)>0?'var(--danger)':'var(--success)'};">${formatNumber(a.stats?.debt||0)}</div><div class="archived-stat-label">الدين</div></div>
+          <div class="archived-stat"><div class="archived-stat-value">${s.price||0}</div><div class="archived-stat-label">السعر</div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleArchive(){
+  document.getElementById('archiveContent').classList.toggle('open');
+  document.getElementById('archiveToggle').classList.toggle('open');
+}
+
+function setFilter(f,btn){
+  state.currentFilter=f;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  renderStudents();
+}
+
+function openStudentDetails(sid){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  const debt=calculateDebt(s);
+  const earned=calculateTotalEarned(s);
+  const paid=calculateTotalPaid(s);
+  const lessonsCount=(s.lessons||[]).filter(l=>l.status==='تم').length;
+  
+  openModal('تفاصيل الطالب',`
+    <div style="text-align:center;margin-bottom:16px;">
+      <div class="student-avatar" style="width:70px;height:70px;font-size:28px;margin:0 auto 10px;">${s.name.trim().charAt(0)||'ط'}</div>
+      <div style="font-size:18px;font-weight:700;">${s.name}</div>
+      <div style="color:var(--gray-500);font-size:13px;">${s.stage} - ${s.grade||''}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+      <div style="background:var(--gray-50);padding:10px;border-radius:var(--radius);text-align:center;">
+        <div style="font-size:18px;font-weight:900;color:var(--primary);">${lessonsCount}</div>
+        <div style="font-size:11px;color:var(--gray-500);">حصة</div>
+      </div>
+      <div style="background:var(--gray-50);padding:10px;border-radius:var(--radius);text-align:center;">
+        <div style="font-size:18px;font-weight:900;color:var(--success);">${formatNumber(paid)}</div>
+        <div style="font-size:11px;color:var(--gray-500);">مدفوع</div>
+      </div>
+      <div style="background:var(--gray-50);padding:10px;border-radius:var(--radius);text-align:center;">
+        <div style="font-size:18px;font-weight:900;color:${debt>0?'var(--danger)':'var(--success)'};">${formatNumber(debt)}</div>
+        <div style="font-size:11px;color:var(--gray-500);">${debt>0?'مستحق':'مسدد'}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <button class="btn btn-secondary" onclick="viewStudentLessons(${sid})"><i class="fas fa-calendar"></i> الحصص</button>
+      <button class="btn btn-secondary" onclick="viewStudentPayments(${sid})"><i class="fas fa-money-bill"></i> الدفعات</button>
+      <button class="btn btn-secondary" onclick="addLessonModal(${sid})"><i class="fas fa-plus"></i> إضافة حصة</button>
+      <button class="btn btn-secondary" onclick="addRecurringLessonsModal(${sid})"><i class="fas fa-sync"></i> حصص ثابتة</button>
+      <button class="btn btn-secondary" onclick="addPaymentForStudent(${sid})"><i class="fas fa-coins"></i> إضافة دفعة</button>
+      <button class="btn btn-primary" style="grid-column:span 2;" onclick="generateStudentReport(${sid})"><i class="fas fa-file-pdf"></i> تقرير شامل</button>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:13px;color:var(--gray-600);">
+      <div style="margin-bottom:6px;"><i class="fas fa-phone" style="color:var(--primary);width:20px;"></i> ${s.phone||'لا يوجد'}</div>
+      ${s.guardianPhone?`<div style="margin-bottom:6px;"><i class="fas fa-user-shield" style="color:var(--primary);width:20px;"></i> ولي الأمر: ${s.guardianRelation||''} - ${s.guardianPhone}</div>`:''}
+      <div style="margin-bottom:6px;"><i class="fas fa-map-marker-alt" style="color:var(--primary);width:20px;"></i> ${s.location||'لا يوجد'}</div>
+      ${s.buildingDetails?`<div style="margin-bottom:6px;"><i class="fas fa-building" style="color:var(--primary);width:20px;"></i> ${s.buildingDetails}</div>`:''}
+    </div>
+    <div class="divider"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <button class="btn btn-secondary" onclick="editStudent(${sid})"><i class="fas fa-edit"></i> تعديل</button>
+      <button class="btn btn-secondary" onclick="archiveStudent(${sid})"><i class="fas fa-archive"></i> أرشفة</button>
+      <button class="btn btn-danger" onclick="deleteStudent(${sid})"><i class="fas fa-trash"></i> حذف</button>
+    </div>
+  `);
+}
+
+function viewStudentLessons(sid){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  const lessons=[...(s.lessons||[])].sort((a,b)=>{
+    if(a.date!==b.date)return b.date.localeCompare(a.date);
+    return b.time.localeCompare(a.time);
+  });
+  let html='';
+  if(lessons.length===0)html=`<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>لا توجد حصص</h3></div>`;
+  else html=lessons.map(l=>{
+    const badge=l.status==='تم'?'badge-success':l.status==='انتظار'?'badge-warning':'badge-danger';
+    return `<div style="background:var(--gray-50);padding:10px;border-radius:var(--radius);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:700;font-size:14px;">${formatDate(l.date)}</div><div style="font-size:12px;color:var(--gray-500);">${l.time} - ${l.duration||1} ساعة</div></div><span class="badge ${badge}">${l.status}</span></div>`;
+  }).join('');
+  openModal('سجل الحصص',html);
+}
+
+function viewStudentPayments(sid){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  const payments=[...(s.payments||[])].sort((a,b)=>b.date.localeCompare(a.date));
+  let html='';
+  if(payments.length===0)html=`<div class="empty-state"><i class="fas fa-money-bill"></i><h3>لا توجد دفعات</h3></div>`;
+  else html=payments.map(p=>`<div style="background:var(--gray-50);padding:10px;border-radius:var(--radius);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:700;font-size:14px;">${formatDate(p.date)}</div>${p.notes?`<div style="font-size:12px;color:var(--gray-500);">${p.notes}</div>`:''}</div><div style="font-weight:900;color:var(--success);font-size:16px;">+${formatNumber(p.amount)} ر.س</div></div>`).join('');
+  openModal('سجل الدفعات',html);
+}
+
+function addLessonModal(sid){
+  const today=getToday();
+  openModal('إضافة حصة',`
+    <div class="form-group"><label class="form-label">التاريخ</label><input type="date" class="form-input" id="lessonDate" value="${today}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">الوقت</label><input type="time" class="form-input" id="lessonTime" value="17:00"></div>
+      <div class="form-group"><label class="form-label">المدة</label><input type="number" class="form-input" id="lessonDuration" value="1" step="0.25" min="0.25"></div>
+    </div>
+    <div class="form-group"><label class="form-label">ملاحظات</label><textarea class="form-textarea" id="lessonNotes"></textarea></div>
+    <button class="btn btn-primary" onclick="saveLesson(${sid})"><i class="fas fa-save"></i> حفظ</button>
+  `);
+}
+
+function saveLesson(sid){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  const date=document.getElementById('lessonDate').value;
+  const time=document.getElementById('lessonTime').value;
+  const duration=parseFloat(document.getElementById('lessonDuration').value)||1;
+  const notes=document.getElementById('lessonNotes').value;
+  if(!date||!time){showToast('الرجاء إدخال التاريخ والوقت','error');return;}
+  s.lessons=s.lessons||[];
+  s.lessons.push({id:Date.now(),date,time,duration,status:'انتظار',notes});
+  saveData();closeModal();renderAll();showToast('تمت إضافة الحصة');
+}
+
+function addRecurringLessonsModal(sid){
+  const today=new Date();
+  openModal('حصص ثابتة طوال الشهر',`
+    <div style="background:var(--info-light);color:var(--info);padding:12px;border-radius:var(--radius);margin-bottom:16px;text-align:center;font-size:13px;"><i class="fas fa-info-circle"></i> سيتم إنشاء حصص لأيام محددة في الشهر</div>
+    <div class="form-group"><label class="form-label">أيام الأسبوع</label>
+      <div class="days-selector" id="daysSelector">
+        <div class="day-checkbox" data-day="0" onclick="this.classList.toggle('selected')">أحد</div>
+        <div class="day-checkbox" data-day="1" onclick="this.classList.toggle('selected')">إثن</div>
+        <div class="day-checkbox" data-day="2" onclick="this.classList.toggle('selected')">ثلا</div>
+        <div class="day-checkbox" data-day="3" onclick="this.classList.toggle('selected')">أرب</div>
+        <div class="day-checkbox" data-day="4" onclick="this.classList.toggle('selected')">خمي</div>
+        <div class="day-checkbox" data-day="5" onclick="this.classList.toggle('selected')">جمع</div>
+        <div class="day-checkbox" data-day="6" onclick="this.classList.toggle('selected')">سبت</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">الوقت</label><input type="time" class="form-input" id="recurringTime" value="17:00"></div>
+      <div class="form-group"><label class="form-label">المدة</label><input type="number" class="form-input" id="recurringDuration" value="1" step="0.25" min="0.25"></div>
+    </div>
+    <div class="form-group"><label class="form-label">ملاحظات</label><input type="text" class="form-input" id="recurringNotes" value="حصة ثابتة طوال الشهر"></div>
+    <button class="btn btn-primary" onclick="saveRecurringLessons(${sid},${today.getFullYear()},${today.getMonth()})"><i class="fas fa-sync"></i> إنشاء الحصص</button>
+  `);
+}
+
+function saveRecurringLessons(sid,year,month){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  const selectedDays=Array.from(document.querySelectorAll('.day-checkbox.selected')).map(el=>parseInt(el.dataset.day));
+  if(selectedDays.length===0){showToast('اختر يوم واحد على الأقل','error');return;}
+  const time=document.getElementById('recurringTime').value;
+  const duration=parseFloat(document.getElementById('recurringDuration').value)||1;
+  const notes=document.getElementById('recurringNotes').value;
+  const lastDay=new Date(year,month+1,0).getDate();
+  let count=0;
+  for(let day=1;day<=lastDay;day++){
+    const d=new Date(year,month,day);
+    if(selectedDays.includes(d.getDay())){
+      const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const exists=(s.lessons||[]).some(l=>l.date===ds&&l.time===time);
+      if(!exists){
+        s.lessons=s.lessons||[];
+        s.lessons.push({id:Date.now()+count,date:ds,time,duration,status:'انتظار',notes});
+        count++;
+      }
+    }
+  }
+  saveData();closeModal();renderAll();showToast(`تم إنشاء ${count} حصة`);
+}
+
+function addPaymentForStudent(sid){
+  const today=getToday();
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);
+  const debt=s?calculateDebt(s):0;
+  openModal('إضافة دفعة',`
+    ${debt>0?`<div style="background:var(--warning-light);color:var(--warning);padding:10px;border-radius:var(--radius);margin-bottom:12px;text-align:center;font-weight:700;">المستحق: ${formatNumber(debt)} ر.س</div>`:''}
+    <div class="form-group"><label class="form-label">المبلغ</label><input type="number" class="form-input" id="paymentAmount" value="${debt>0?debt:''}"></div>
+    <div class="form-group"><label class="form-label">التاريخ</label><input type="date" class="form-input" id="paymentDate" value="${today}"></div>
+    <div class="form-group"><label class="form-label">ملاحظات</label><input type="text" class="form-input" id="paymentNotes"></div>
+    <button class="btn btn-primary" onclick="savePayment(${sid})"><i class="fas fa-save"></i> حفظ</button>
+  `);
+}
+
+function savePayment(sid){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  const amount=parseFloat(document.getElementById('paymentAmount').value);
+  const date=document.getElementById('paymentDate').value;
+  const notes=document.getElementById('paymentNotes').value;
+  if(!amount||amount<=0){showToast('الرجاء إدخال مبلغ صحيح','error');return;}
+  s.payments=s.payments||[];
+  s.payments.push({id:Date.now(),amount,date,notes});
+  saveData();closeModal();renderAll();showToast('تمت إضافة الدفعة');
+}
+
+function editStudent(sid){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  closeModal();
+  setTimeout(()=>openStudentForm(s),300);
+}
+
+function archiveStudent(sid){
+  if(!confirm('هل تريد أرشفة هذا الطالب؟'))return;
+  const u=getCurrentUser();
+  const idx=u.students.findIndex(x=>x.id===sid);if(idx<0)return;
+  const s=u.students[idx];
+  u.archivedStudents=u.archivedStudents||[];
+  u.archivedStudents.push({
+    id:Date.now(),
+    archivedAt:new Date().toISOString(),
+    student:s,
+    stats:{
+      lessonCount:(s.lessons||[]).filter(l=>l.status==='تم').length,
+      paid:calculateTotalPaid(s),
+      debt:Math.max(0,calculateDebt(s))
+    }
+  });
+  u.students.splice(idx,1);
+  saveData();closeModal();renderAll();showToast('تمت الأرشفة');
+}
+
+function deleteStudent(sid){
+  if(!confirm('هل أنت متأكد من حذف هذا الطالب؟'))return;
+  const u=getCurrentUser();
+  u.students=u.students.filter(x=>x.id!==sid);
+  saveData();closeModal();renderAll();showToast('تم الحذف');
+}
+
+function openStudentForm(s=null){
+  const isEdit=!!s;
+  openModal(isEdit?'تعديل بيانات الطالب':'إضافة طالب جديد',`
+    <div class="form-group"><label class="form-label">الاسم *</label><input type="text" class="form-input" id="sName" value="${s?.name||''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">المرحلة</label>
+        <select class="form-select" id="sStage">
+          <option value="ابتدائي" ${s?.stage==='ابتدائي'?'selected':''}>ابتدائي</option>
+          <option value="متوسط" ${s?.stage==='متوسط'?'selected':''}>متوسط</option>
+          <option value="ثانوي" ${s?.stage==='ثانوي'?'selected':''}>ثانوي</option>
+          <option value="جامعي" ${s?.stage==='جامعي'?'selected':''}>جامعي</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">السنة الدراسية</label><input type="text" class="form-input" id="sGrade" value="${s?.grade||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">نوع الحصة</label>
+        <select class="form-select" id="sCourseType">
+          <option value="حضوري" ${s?.courseType==='حضوري'?'selected':''}>حضوري</option>
+          <option value="اونلاين" ${s?.courseType==='اونلاين'?'selected':''}>أونلاين</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">نوع المادة</label>
+        <select class="form-select" id="sSubjectType">
+          <option value="منهج" ${s?.subjectType==='منهج'?'selected':''}>منهج</option>
+          <option value="قدرات" ${s?.subjectType==='قدرات'?'selected':''}>قدرات</option>
+          <option value="تحصيلي" ${s?.subjectType==='تحصيلي'?'selected':''}>تحصيلي</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">سعر الحصة *</label><input type="number" class="form-input" id="sPrice" value="${s?.price||''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">جوال الطالب</label><input type="tel" class="form-input" id="sPhone" value="${s?.phone||''}"></div>
+      <div class="form-group"><label class="form-label">جوال ولي الأمر</label><input type="tel" class="form-input" id="sGuardianPhone" value="${s?.guardianPhone||''}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">صلة ولي الأمر</label><input type="text" class="form-input" id="sGuardianRelation" value="${s?.guardianRelation||''}" placeholder="أب / أم / أخ"></div>
+    <div class="form-group"><label class="form-label">الموقع / الحي</label><input type="text" class="form-input" id="sLocation" value="${s?.location||''}"></div>
+    <div class="form-group"><label class="form-label">تفاصيل السكن</label><textarea class="form-textarea" id="sBuildingDetails">${s?.buildingDetails||''}</textarea></div>
+    <button class="btn btn-primary" onclick="saveStudent(${s?.id||'null'})"><i class="fas fa-save"></i> ${isEdit?'تحديث':'حفظ'}</button>
+  `);
+}
+
+function saveStudent(id){
+  const u=getCurrentUser();
+  const name=document.getElementById('sName').value.trim();
+  const price=parseFloat(document.getElementById('sPrice').value);
+  if(!name){showToast('الرجاء إدخال الاسم','error');return;}
+  if(!price||price<=0){showToast('الرجاء إدخال سعر صحيح','error');return;}
+  const data={
+    name,
+    stage:document.getElementById('sStage').value,
+    grade:document.getElementById('sGrade').value,
+    courseType:document.getElementById('sCourseType').value,
+    subjectType:document.getElementById('sSubjectType').value,
+    price,
+    phone:document.getElementById('sPhone').value,
+    guardianPhone:document.getElementById('sGuardianPhone').value,
+    guardianRelation:document.getElementById('sGuardianRelation').value,
+    location:document.getElementById('sLocation').value,
+    buildingDetails:document.getElementById('sBuildingDetails').value
+  };
+  if(id){
+    const s=u.students.find(x=>x.id===id);
+    Object.assign(s,data);
+  }else{
+    u.students=u.students||[];
+    u.students.push({id:Date.now(),...data,lessons:[],payments:[]});
+  }
+  saveData();closeModal();renderAll();showToast(id?'تم التحديث':'تمت الإضافة');
+}
+
+// ============ FINANCE ============
+function renderFinance(){
+  const u=getCurrentUser();if(!u)return;
+  const students=u.students||[];
+  let totalIncome=0,totalDebt=0,totalExpected=0;
+  students.forEach(s=>{
+    totalIncome+=calculateTotalPaid(s);
+    const d=calculateDebt(s);if(d>0)totalDebt+=d;
+    totalExpected+=calculateExpected(s);
+  });
+  document.getElementById('totalIncome').textContent=formatNumber(totalIncome);
+  document.getElementById('totalDebt').textContent=formatNumber(totalDebt);
+  document.getElementById('totalExpected').textContent=formatNumber(totalExpected);
+  document.getElementById('totalStudents').textContent=formatNumber(students.length);
+  renderIncomeChart(students);
+  renderStudentsFinance(students);
+  renderPaymentsList(students);
+}
+
+function renderIncomeChart(students){
+  const monthly={};
+  students.forEach(s=>{
+    (s.payments||[]).forEach(p=>{
+      const m=p.date.substring(0,7);
+      monthly[m]=(monthly[m]||0)+parseFloat(p.amount);
+    });
+  });
+  const sorted=Object.keys(monthly).sort();
+  const last6=sorted.slice(-6);
+  const labels=last6.map(m=>{const [y,mo]=m.split('-');return getMonthName(parseInt(mo)-1);});
+  const data=last6.map(m=>monthly[m]);
+  const ctx=document.getElementById('incomeChart');if(!ctx)return;
+  if(state.charts.income)state.charts.income.destroy();
+  state.charts.income=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{label:'الدخل',data,borderRadius:8,backgroundColor:'rgba(102,126,234,.8)',borderColor:'#667eea',borderWidth:2}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e293b',titleFont:{family:'Tajawal'},bodyFont:{family:'Tajawal'},callbacks:{label:c=>`${formatNumber(c.parsed.y)} ر.س`}}},
+      scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{family:'Tajawal'},callback:v=>formatNumber(v)}},x:{grid:{display:false},ticks:{font:{family:'Tajawal'}}}}
+    }
+  });
+}
+
+function renderStudentsFinance(students){
+  const c=document.getElementById('studentsFinance');
+  const list=students.map(s=>({...s,debt:calculateDebt(s),paid:calculateTotalPaid(s),earned:calculateTotalEarned(s)})).sort((a,b)=>b.debt-a.debt);
+  if(list.length===0){c.innerHTML=`<div class="empty-state"><i class="fas fa-users"></i><h3>لا يوجد طلاب</h3></div>`;return;}
+  c.innerHTML=list.map(s=>`
+    <div style="padding:10px;background:var(--gray-50);border-radius:var(--radius);margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-weight:700;">${s.name}</div>
+        <div style="font-weight:900;color:${s.debt>0?'var(--danger)':'var(--success)'};">${s.debt>0?formatNumber(s.debt)+' ر.س':'مسدد ✓'}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-500);">
+        <span>المكتسب: ${formatNumber(s.earned)}</span>
+        <span>المدفوع: ${formatNumber(s.paid)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPaymentsList(students){
+  const c=document.getElementById('paymentsList');
+  const all=[];
+  students.forEach(s=>{(s.payments||[]).forEach(p=>all.push({...p,studentName:s.name,studentId:s.id}));});
+  all.sort((a,b)=>b.date.localeCompare(a.date));
+  const recent=all.slice(0,10);
+  if(recent.length===0){c.innerHTML=`<div class="empty-state"><i class="fas fa-receipt"></i><h3>لا توجد دفعات</h3></div>`;return;}
+  c.innerHTML=recent.map(p=>`
+    <div style="padding:10px;background:var(--gray-50);border-radius:var(--radius);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-weight:700;font-size:14px;">${p.studentName}</div><div style="font-size:12px;color:var(--gray-500);">${formatDate(p.date)}</div></div>
+      <div style="font-weight:900;color:var(--success);font-size:16px;">+${formatNumber(p.amount)}</div>
+    </div>
+  `).join('');
+}
+
+function openAddPaymentModal(){
+  const u=getCurrentUser();
+  const students=u.students||[];
+  if(students.length===0){showToast('لا يوجد طلاب','error');return;}
+  const today=getToday();
+  const opts=students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  openModal('إضافة دفعة',`
+    <div class="form-group"><label class="form-label">الطالب</label><select class="form-select" id="paymentStudent">${opts}</select></div>
+    <div class="form-group"><label class="form-label">المبلغ</label><input type="number" class="form-input" id="paymentAmount"></div>
+    <div class="form-group"><label class="form-label">التاريخ</label><input type="date" class="form-input" id="paymentDate" value="${today}"></div>
+    <div class="form-group"><label class="form-label">ملاحظات</label><input type="text" class="form-input" id="paymentNotes"></div>
+    <button class="btn btn-primary" onclick="savePaymentGlobal()"><i class="fas fa-save"></i> حفظ</button>
+  `);
+}
+
+function savePaymentGlobal(){
+  const sid=parseInt(document.getElementById('paymentStudent').value);
+  const amount=parseFloat(document.getElementById('paymentAmount').value);
+  const date=document.getElementById('paymentDate').value;
+  const notes=document.getElementById('paymentNotes').value;
+  if(!amount||amount<=0){showToast('مبلغ غير صحيح','error');return;}
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  s.payments=s.payments||[];
+  s.payments.push({id:Date.now(),amount,date,notes});
+  saveData();closeModal();renderAll();showToast('تمت الإضافة');
+}
+
+function exportFinanceReport(){
+  const u=getCurrentUser();
+  const students=u.students||[];
+  const teacher=u.teacher||{};
+  const html=`
+    <div class="report-container">
+      <div class="report-header">
+        <div class="report-title">تقرير مالي شامل</div>
+        <div class="report-subtitle">${(teacher.name||'').replace(/‏/g,'')} - ${formatDate(getToday())}</div>
+      </div>
+      <div class="report-summary">
+        <div class="report-summary-item"><div class="report-summary-value">${formatNumber(students.length)}</div><div class="report-summary-label">عدد الطلاب</div></div>
+        <div class="report-summary-item"><div class="report-summary-value">${formatNumber(students.reduce((s,st)=>s+calculateTotalPaid(st),0))}</div><div class="report-summary-label">إجمالي الدخل</div></div>
+        <div class="report-summary-item"><div class="report-summary-value">${formatNumber(students.reduce((s,st)=>s+Math.max(0,calculateDebt(st)),0))}</div><div class="report-summary-label">ديون مستحقة</div></div>
+      </div>
+      <div class="report-section">
+        <div class="report-section-title">تفاصيل الطلاب</div>
+        <table class="report-table">
+          <thead><tr><th>الطالب</th><th>السعر</th><th>المكتسب</th><th>المدفوع</th><th>المستحق</th></tr></thead>
+          <tbody>
+            ${students.map(s=>{
+              const earned=calculateTotalEarned(s);
+              const paid=calculateTotalPaid(s);
+              const debt=calculateDebt(s);
+              return `<tr><td>${s.name}</td><td>${s.price}</td><td>${formatNumber(earned)}</td><td>${formatNumber(paid)}</td><td style="color:${debt>0?'var(--danger)':'var(--success)'};font-weight:700;">${formatNumber(debt)}</td></tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  generatePDF(html,'تقرير_مالي');
+}
+
+// ============ CONTACTS ============
+function renderContacts(){
+  const u=getCurrentUser();if(!u)return;
+  const students=u.students||[];
+  const search=(document.getElementById('contactSearch')?.value||'').toLowerCase();
+  const filtered=students.filter(s=>{
+    const match=s.name.toLowerCase().includes(search)||(s.phone||'').includes(search)||(s.guardianPhone||'').includes(search);
+    return match&&(s.phone||s.guardianPhone);
+  });
+  const c=document.getElementById('contactsList');
+  if(filtered.length===0){c.innerHTML=`<div class="empty-state"><i class="fas fa-address-book"></i><h3>لا توجد جهات اتصال</h3></div>`;return;}
+  c.innerHTML=filtered.map(s=>{
+    const phones=[];
+    if(s.phone)phones.push({type:'طالب',number:s.phone});
+    if(s.guardianPhone)phones.push({type:s.guardianRelation||'ولي الأمر',number:s.guardianPhone});
+    const debt=calculateDebt(s);
+    const paid=calculateTotalPaid(s);
+    const earned=calculateTotalEarned(s);
+    return `
+      <div class="contact-card">
+        <div class="contact-header">
+          <div class="student-avatar" style="width:44px;height:44px;font-size:18px;">${s.name.trim().charAt(0)}</div>
+          <div class="contact-name">${s.name}</div>
+        </div>
+        <div class="contact-finance">
+          <div class="contact-finance-item"><div class="contact-finance-value">${formatNumber(earned)}</div><div class="contact-finance-label">الإجمالي</div></div>
+          <div class="contact-finance-item"><div class="contact-finance-value" style="color:var(--success);">${formatNumber(paid)}</div><div class="contact-finance-label">مدفوع</div></div>
+          <div class="contact-finance-item"><div class="contact-finance-value" style="color:${debt>0?'var(--danger)':'var(--success)'};">${formatNumber(debt)}</div><div class="contact-finance-label">الدين</div></div>
+        </div>
+        <div class="contact-actions">
+          ${phones.map(p=>`
+            <button class="contact-btn call" onclick="callPhone('${p.number}')"><i class="fas fa-phone"></i> ${p.type}</button>
+            <button class="contact-btn whatsapp" onclick="openWhatsApp('${p.number}')"><i class="fab fa-whatsapp"></i> واتساب</button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function callPhone(n){window.location.href=`tel:${n.replace(/\s+/g,'')}`;}
+function openWhatsApp(n){
+  let c=n.replace(/[\s\-\+]/g,'');
+  if(c.startsWith('0'))c='966'+c.substring(1);
+  if(!c.startsWith('966'))c='966'+c;
+  window.open(`https://wa.me/${c}`,'_blank');
+}
+
+// ============ PROFILE ============
+function renderProfile(){
+  const u=getCurrentUser();if(!u)return;
+  const t=u.teacher||{};
+  const name=(t.name||'').replace(/‏/g,'').trim();
+  document.getElementById('profileName').textContent=name;
+  document.getElementById('profileSubject').textContent=t.specialty?`معلم ${t.specialty.replace(/‏/g,'')}`:'';
+  const av=document.getElementById('profileAvatar');
+  if(t.photo)av.innerHTML=`<img src="${t.photo}">`;
+  else av.textContent=name?name.charAt(0):'م';
+}
+
+function openEditProfileModal(){
+  const u=getCurrentUser();
+  const t=u.teacher||{};
+  openModal('تعديل البيانات الشخصية',`
+    <div class="form-group"><label class="form-label">الاسم</label><input type="text" class="form-input" id="tName" value="${(t.name||'').replace(/‏/g,'')}"></div>
+    <div class="form-group"><label class="form-label">التخصص</label><input type="text" class="form-input" id="tSpecialty" value="${(t.specialty||'').replace(/‏/g,'')}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">الجوال</label><input type="tel" class="form-input" id="tPhone" value="${t.phone||''}"></div>
+      <div class="form-group"><label class="form-label">المدينة</label><input type="text" class="form-input" id="tCity" value="${t.city||''}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">البريد</label><input type="email" class="form-input" id="tEmail" value="${t.email||''}"></div>
+    <div class="form-group"><label class="form-label">سنوات الخبرة</label><input type="number" class="form-input" id="tExperience" value="${t.experience||0}"></div>
+    <div class="form-group"><label class="form-label">نبذة</label><textarea class="form-textarea" id="tBio">${t.bio||''}</textarea></div>
+    <button class="btn btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i> حفظ</button>
+  `);
+}
+
+function saveProfile(){
+  const u=getCurrentUser();
+  u.teacher={...u.teacher,
+    name:document.getElementById('tName').value,
+    specialty:document.getElementById('tSpecialty').value,
+    phone:document.getElementById('tPhone').value,
+    city:document.getElementById('tCity').value,
+    email:document.getElementById('tEmail').value,
+    experience:parseInt(document.getElementById('tExperience').value)||0,
+    bio:document.getElementById('tBio').value
+  };
+  saveData();closeModal();renderAll();showToast('تم الحفظ');
+}
+
+function openUsersModal(){
+  const users=Object.keys(state.users);
+  openModal('تبديل المستخدمين',`
+    <div id="usersList">
+      ${users.map(uid=>{
+        const u=state.users[uid];
+        const name=(u.teacher?.name||'').replace(/‏/g,'').trim()||'مستخدم';
+        const isActive=uid===state.currentUserId;
+        return `<div class="user-item ${isActive?'active':''}" onclick="switchUser('${uid}')">
+          <div class="student-avatar" style="width:40px;height:40px;font-size:16px;">${name.charAt(0)}</div>
+          <div style="flex:1;"><div style="font-weight:700;">${name}</div><div style="font-size:12px;opacity:.8;">${u.students?.length||0} طالب</div></div>
+          ${isActive?'<i class="fas fa-check-circle"></i>':''}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-primary" onclick="addNewUser()"><i class="fas fa-user-plus"></i> إضافة مستخدم جديد</button>
+  `);
+}
+
+function switchUser(uid){
+  state.currentUserId=uid;
+  saveData();closeModal();renderAll();renderCalendar();showToast('تم التبديل');
+}
+
+function addNewUser(){
+  const name=prompt('اسم المستخدم الجديد:');if(!name)return;
+  const id='user_'+Date.now();
+  state.users[id]={version:4,profileId:id,teacher:{name,specialty:'',phone:'',email:'',city:'',bio:''},students:[],archivedStudents:[],lessonArchive:[],backupLogs:[]};
+  state.currentUserId=id;
+  saveData();closeModal();renderAll();renderCalendar();showToast('تمت الإضافة');
+}
+
+// ============ BACKUP ============
+function downloadBackup(){
+  const u=getCurrentUser();if(!u)return;
+  const now=new Date();
+  const fileName=`teacher-notebook-backup-${now.toISOString().split('T')[0]}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}.json`;
+  const blob=new Blob([JSON.stringify(u,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fileName;a.click();
+  u.backupLogs=u.backupLogs||[];
+  u.backupLogs.push({id:Date.now(),type:'download',fileName,date:now.toISOString()});
+  saveData();showToast('تم التحميل');
+}
+
+function uploadBackup(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.teacher&&!data.students)throw new Error('ملف غير صالح');
+      const id=data.profileId||'user_'+Date.now();
+      state.users[id]=data;
+      state.currentUserId=id;
+      saveData();renderAll();renderCalendar();showToast('تم الاستعادة');
+    }catch(err){showToast('خطأ في الملف','error');}
+  };
+  r.readAsText(f);
+  e.target.value='';
+}
+
+function viewBackupLogs(){
+  const u=getCurrentUser();
+  const logs=u.backupLogs||[];
+  let html='';
+  if(logs.length===0)html=`<div class="empty-state"><i class="fas fa-history"></i><h3>لا توجد سجلات</h3></div>`;
+  else html=[...logs].reverse().map(log=>`
+    <div style="padding:10px;background:var(--gray-50);border-radius:var(--radius);margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:${log.type==='download'?'var(--success-light)':'var(--info-light)'};color:${log.type==='download'?'var(--success)':'var(--info)'};display:flex;align-items:center;justify-content:center;"><i class="fas fa-${log.type==='download'?'download':'upload'}"></i></div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:13px;">${log.fileName}</div><div style="font-size:11px;color:var(--gray-500);">${formatDate(log.date)}</div></div>
+    </div>
+  `).join('');
+  openModal('سجل النسخ الاحتياطية',html);
+}
+
+function showAbout(){
+  openModal('حول التطبيق',`
+    <div style="text-align:center;padding:20px;">
+      <div style="width:80px;height:80px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 16px;"><i class="fas fa-book-open"></i></div>
+      <h2 style="margin-bottom:4px;">دفتر المعلم</h2>
+      <p style="color:var(--gray-500);margin-bottom:16px;">الإصدار 2.0.0</p>
+      <p style="line-height:1.8;color:var(--gray-600);">تطبيق احترافي لإدارة الدروس الخصوصية، يتيح لك متابعة طلابك، حصصك، ودخلك المالي بكل سهولة واحترافية.</p>
+      <div class="divider"></div>
+      <p style="font-size:12px;color:var(--gray-500);">جميع البيانات محفوظة محلياً على جهازك</p>
+    </div>
+  `);
+}
+
+// ============ REPORTS ============
+function generateStudentReport(sid){
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  const teacher=u.teacher||{};
+  const lessons=[...(s.lessons||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  const payments=[...(s.payments||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  const totalLessons=lessons.filter(l=>l.status==='تم').length;
+  const totalHours=lessons.filter(l=>l.status==='تم').reduce((sum,l)=>sum+(l.duration||1),0);
+  const earned=totalHours*(parseFloat(s.price)||0);
+  const paid=calculateTotalPaid(s);
+  const debt=earned-paid;
+  
+  const html=`
+    <div class="report-container">
+      <div class="report-header">
+        <div class="report-title">تقرير الطالب الشامل</div>
+        <div class="report-subtitle">${s.name} - ${(teacher.name||'').replace(/‏/g,'')}</div>
+      </div>
+      <div class="report-section">
+        <div class="report-section-title">البيانات الشخصية</div>
+        <table class="report-table">
+          <tr><td style="font-weight:700;width:30%;">الاسم</td><td>${s.name}</td></tr>
+          <tr><td style="font-weight:700;">المرحلة</td><td>${s.stage} - ${s.grade||'-'}</td></tr>
+          <tr><td style="font-weight:700;">نوع الحصة</td><td>${s.courseType}</td></tr>
+          <tr><td style="font-weight:700;">نوع المادة</td><td>${s.subjectType}</td></tr>
+          <tr><td style="font-weight:700;">سعر الحصة</td><td>${s.price} ر.س</td></tr>
+          ${s.phone?`<tr><td style="font-weight:700;">الجوال</td><td>${s.phone}</td></tr>`:''}
+          ${s.guardianPhone?`<tr><td style="font-weight:700;">ولي الأمر</td><td>${s.guardianRelation||'-'} - ${s.guardianPhone}</td></tr>`:''}
+          ${s.location?`<tr><td style="font-weight:700;">الموقع</td><td>${s.location}</td></tr>`:''}
+          ${s.buildingDetails?`<tr><td style="font-weight:700;">تفاصيل السكن</td><td>${s.buildingDetails}</td></tr>`:''}
+        </table>
+      </div>
+      <div class="report-summary">
+        <div class="report-summary-item"><div class="report-summary-value">${totalLessons}</div><div class="report-summary-label">عدد الحصص</div></div>
+        <div class="report-summary-item"><div class="report-summary-value">${formatNumber(earned)}</div><div class="report-summary-label">المكتسب</div></div>
+        <div class="report-summary-item"><div class="report-summary-value" style="color:${debt>0?'var(--danger)':'var(--success)'};">${formatNumber(debt)}</div><div class="report-summary-label">${debt>0?'مستحق':'مسدد'}</div></div>
+      </div>
+      <div class="report-section">
+        <div class="report-section-title">سجل الحصص (${lessons.length})</div>
+        <table class="report-table">
+          <thead><tr><th>التاريخ</th><th>الوقت</th><th>المدة</th><th>الحالة</th></tr></thead>
+          <tbody>${lessons.map(l=>`<tr><td>${formatDate(l.date)}</td><td>${l.time}</td><td>${l.duration||1}</td><td style="color:${l.status==='تم'?'var(--success)':l.status==='انتظار'?'var(--warning)':'var(--danger)'};font-weight:700;">${l.status}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <div class="report-section">
+        <div class="report-section-title">سجل الدفعات (${payments.length})</div>
+        ${payments.length===0?'<p style="text-align:center;color:var(--gray-500);padding:20px;">لا توجد دفعات</p>':`
+        <table class="report-table">
+          <thead><tr><th>التاريخ</th><th>المبلغ</th><th>ملاحظات</th></tr></thead>
+          <tbody>${payments.map(p=>`<tr><td>${formatDate(p.date)}</td><td style="color:var(--success);font-weight:700;">${formatNumber(p.amount)} ر.س</td><td>${p.notes||'-'}</td></tr>`).join('')}</tbody>
+        </table>`}
+      </div>
+    </div>
+  `;
+  closeModal();
+  setTimeout(()=>{
+    openModal('تصدير التقرير',`
+      <div style="text-align:center;padding:20px;">
+        <i class="fas fa-file-alt" style="font-size:48px;color:var(--primary);margin-bottom:16px;"></i>
+        <h3 style="margin-bottom:8px;">اختر صيغة التقرير</h3>
+        <p style="color:var(--gray-500);margin-bottom:20px;">تقرير_${s.name}</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button class="btn btn-primary" onclick='generatePDF(window._reportHtml,"تقرير_${s.name}")'><i class="fas fa-file-pdf"></i> PDF</button>
+          <button class="btn btn-success" onclick='generatePNG(window._reportHtml,"تقرير_${s.name}")'><i class="fas fa-image"></i> PNG</button>
+        </div>
+      </div>
+    `);
+    window._reportHtml=html;
+  },300);
+}
+
+function generatePDF(html,fileName){
+  const c=document.getElementById('reportContainer');
+  c.innerHTML=html;
+  setTimeout(()=>{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF('p','mm','a4');
+    const el=c.firstChild;
+    html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'}).then(canvas=>{
+      const imgData=canvas.toDataURL('image/jpeg',.95);
+      const imgWidth=190;
+      const pageHeight=297;
+      const imgHeight=(canvas.height*imgWidth)/canvas.width;
+      let heightLeft=imgHeight;
+      let position=10;
+      doc.addImage(imgData,'JPEG',10,position,imgWidth,imgHeight);
+      heightLeft-=(pageHeight-20);
+      while(heightLeft>0){
+        position=heightLeft-imgHeight+10;
+        doc.addPage();
+        doc.addImage(imgData,'JPEG',10,position,imgWidth,imgHeight);
+        heightLeft-=(pageHeight-20);
+      }
+      doc.save(`${fileName}.pdf`);
+      c.innerHTML='';closeModal();showToast('تم تصدير PDF');
+    }).catch(e=>{console.error(e);showToast('خطأ في التصدير','error');});
+  },100);
+}
+
+function generatePNG(html,fileName){
+  const c=document.getElementById('reportContainer');
+  c.innerHTML=html;
+  setTimeout(()=>{
+    const el=c.firstChild;
+    html2canvas(el,{scale:3,useCORS:true,backgroundColor:'#ffffff'}).then(canvas=>{
+      const a=document.createElement('a');
+      a.download=`${fileName}.png`;
+      a.href=canvas.toDataURL('image/png');
+      a.click();
+      c.innerHTML='';closeModal();showToast('تم تصدير PNG');
+    }).catch(e=>{console.error(e);showToast('خطأ في التصدير','error');});
+  },100);
+}
+
+// ============ NOTIFICATIONS ============
+function checkNotifications(){
+  const u=getCurrentUser();if(!u)return;
+  const students=u.students||[];
+  const now=new Date();
+  const currentTime=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  let count=0;
+  students.forEach(s=>{
+    (s.lessons||[]).forEach(l=>{
+      if(l.date===getToday()&&l.status==='انتظار'&&l.time<currentTime)count++;
+    });
+  });
+  const badge=document.getElementById('notificationBadge');
+  if(count>0){badge.textContent=count;badge.style.display='flex';}
+  else badge.style.display='none';
+}
+
+function showNotifications(){
+  const u=getCurrentUser();if(!u)return;
+  const students=u.students||[];
+  const now=new Date();
+  const currentTime=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const overdue=[];
+  students.forEach(s=>{
+    (s.lessons||[]).forEach(l=>{
+      if(l.date===getToday()&&l.status==='انتظار'&&l.time<currentTime)overdue.push({...l,studentName:s.name,studentId:s.id});
+    });
+  });
+  overdue.sort((a,b)=>a.time.localeCompare(b.time));
+  let html='';
+  if(overdue.length===0)html=`<div class="empty-state"><i class="fas fa-bell-slash"></i><h3>لا توجد إشعارات</h3><p>جميع الحصص في موعدها</p></div>`;
+  else html=`<div style="background:var(--warning-light);color:var(--warning);padding:12px;border-radius:var(--radius);margin-bottom:12px;text-align:center;font-weight:700;">لديك ${overdue.length} حصة تجاوزت موعدها</div>`+overdue.map(l=>`
+    <div class="notification-item" onclick="openLessonDetails(${l.studentId},${l.id})">
+      <div class="notification-icon"><i class="fas fa-exclamation"></i></div>
+      <div class="notification-content">
+        <div class="notification-title">${l.studentName}</div>
+        <div class="notification-time">${l.time} - تجاوز الموعد</div>
+      </div>
+    </div>
+  `).join('');
+  openModal('الإشعارات',html);
+}
+
+// ============ NAVIGATION ============
+function switchTab(tab,btn){
+  state.currentTab=tab;
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  else{
+    const items=document.querySelectorAll('.nav-item');
+    const tabs=['home','students','finance','contacts','profile'];
+    const idx=tabs.indexOf(tab);
+    if(idx>=0)items[idx].classList.add('active');
+  }
+  const fab=document.getElementById('fab');
+  fab.style.display=(tab==='students'||tab==='home')?'flex':'none';
+  if(tab==='finance')setTimeout(()=>renderFinance(),100);
+  window.scrollTo(0,0);
+}
+
+function handleFab(){
+  if(state.currentTab==='students')openStudentForm();
+  else if(state.currentTab==='home')openQuickLessonModal();
+}
+
+function openQuickLessonModal(){
+  const u=getCurrentUser();
+  const students=u.students||[];
+  if(students.length===0){showToast('أضف طالباً أولاً','error');switchTab('students');return;}
+  const today=getToday();
+  const opts=students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  openModal('إضافة حصة سريعة',`
+    <div class="form-group"><label class="form-label">الطالب</label><select class="form-select" id="quickLessonStudent">${opts}</select></div>
+    <div class="form-group"><label class="form-label">التاريخ</label><input type="date" class="form-input" id="quickLessonDate" value="${today}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">الوقت</label><input type="time" class="form-input" id="quickLessonTime" value="17:00"></div>
+      <div class="form-group"><label class="form-label">المدة</label><input type="number" class="form-input" id="quickLessonDuration" value="1" step="0.25" min="0.25"></div>
+    </div>
+    <div class="form-group"><label class="form-label">ملاحظات</label><input type="text" class="form-input" id="quickLessonNotes"></div>
+    <button class="btn btn-primary" onclick="saveQuickLesson()"><i class="fas fa-save"></i> حفظ</button>
+  `);
+}
+
+function saveQuickLesson(){
+  const sid=parseInt(document.getElementById('quickLessonStudent').value);
+  const date=document.getElementById('quickLessonDate').value;
+  const time=document.getElementById('quickLessonTime').value;
+  const duration=parseFloat(document.getElementById('quickLessonDuration').value)||1;
+  const notes=document.getElementById('quickLessonNotes').value;
+  const u=getCurrentUser();
+  const s=u.students.find(x=>x.id===sid);if(!s)return;
+  s.lessons=s.lessons||[];
+  s.lessons.push({id:Date.now(),date,time,duration,status:'انتظار',notes});
+  saveData();closeModal();renderAll();showToast('تمت الإضافة');
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded',init);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+setInterval(checkNotifications,60000);
+</script>
+</body>
+</html>
